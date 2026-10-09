@@ -1,4 +1,8 @@
 /*-
+ * SPDX-License-Identifier: GPL-2.0-only
+ *
+ * Copyright (c) 2026 Lorenzo Cozzaglio
+ *
  * VeloCloud Edge 520/540 ("edge5x0") support for the Intel I354 functions
  * wired to the two Marvell 88E6176 switches.
  *

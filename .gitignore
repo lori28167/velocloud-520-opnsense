@@ -2,3 +2,5 @@ tools/con.log
 tools/vm_key
 tools/.vm_known_hosts
 tools/.push.b64
+*.ko
+tools/vm_key.pub

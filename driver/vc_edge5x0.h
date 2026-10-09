@@ -1,4 +1,8 @@
 /*-
+ * SPDX-License-Identifier: GPL-2.0-only
+ *
+ * Copyright (c) 2026 Lorenzo Cozzaglio
+ *
  * VeloCloud Edge 520/540 ("edge5x0") glue for the e1000/igb driver.
  */
 #ifndef _VC_EDGE5X0_H_

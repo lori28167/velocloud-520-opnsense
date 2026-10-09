@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-only
 # Builds the if_vcigb module tree from the OPNsense e1000 sources.
 # Usage (in the build VM): sh prepare.sh /usr/src /root/vcigb-src
 set -eu
