@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Come con-reader, ma sopravvive a scollegamenti: aspetta che /dev/ttyUSB0 ricompaia
+# (il CP2102N è alimentato dal VeloCloud) e riprende a registrare. uso: con-follow [secondi]
+D="$(cd "$(dirname "$0")" && pwd)"
+END=$(( $(date +%s) + ${1:-3600} ))
+while [ "$(date +%s)" -lt "$END" ]; do
+	if [ -r /dev/ttyUSB0 ] && [ -w /dev/ttyUSB0 ]; then
+		echo "[con-follow $(date +%T)] seriale presente" >> "$D/con.log"
+		"$D/con-reader"
+		echo "[con-follow $(date +%T)] seriale persa" >> "$D/con.log"
+	fi
+	sleep 0.2
+done

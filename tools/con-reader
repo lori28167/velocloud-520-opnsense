@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # Registra la console seriale del VeloCloud (COM2 via mini-USB, 115200) in tools/con.log.
+# La porta va aperta PRIMA di impostare la velocità: alla chiusura il driver cp210x
+# può tornare a 9600 (succede dopo che l'adattatore si è ricollegato).
 # Una sola copia alla volta, e niente picocom in parallelo (si dividerebbero i byte).
 D="$(cd "$(dirname "$0")" && pwd)"
-stty -F /dev/ttyUSB0 115200 cs8 -cstopb -parenb -crtscts -ixon -ixoff clocal raw -echo -echoe -echok -echoctl -echoke
-exec cat /dev/ttyUSB0 >> "$D/con.log"
+exec 3<>/dev/ttyUSB0
+stty 115200 cs8 -cstopb -parenb -crtscts -ixon -ixoff clocal raw -echo -echoe -echok -echoctl -echoke <&3
+exec cat <&3 >> "$D/con.log"

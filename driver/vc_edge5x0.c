@@ -321,7 +321,7 @@ vc_gpio_setup(void)
 {
 	device_t lpc;
 	char *ver;
-	u32 v;
+	u32 v, io;
 
 	if (vc_gpio_base != 0)
 		return (0);
@@ -345,21 +345,31 @@ vc_gpio_setup(void)
 	vc_gpio_base = v;
 
 	mtx_lock(&vc_bb_mtx);
-	/* Latch our pins low, MDC driven, MDIO/SDA/SCL released ... */
-	vc_gpio_lvl = inl(vc_gpio_base + C2000_GPIO_LVL) & ~VC_GPIO_MASK;
-	outl(vc_gpio_base + C2000_GPIO_LVL, vc_gpio_lvl);
-	v = inl(vc_gpio_base + C2000_GPIO_IO_SEL);
-	v |= VC_GPIO_MASK;
-	v &= ~(1u << VC_GPIO_MDC);
-	outl(vc_gpio_base + C2000_GPIO_IO_SEL, v);
-	/* ... then take them from their native function (coreboot leaves them). */
+	/*
+	 * Take the pins from their native function first (coreboot leaves
+	 * MDIO/MDC native): IO_SEL and LVL writes to a pin that is still
+	 * native are dropped, which left MDC an input after a cold boot.
+	 */
 	v = inl(vc_gpio_base + C2000_GPIO_USE_SEL);
 	if ((v & VC_GPIO_MASK) != VC_GPIO_MASK)
 		outl(vc_gpio_base + C2000_GPIO_USE_SEL, v | VC_GPIO_MASK);
+	/* Latch our pins low, MDC driven, MDIO/SDA/SCL released. */
+	vc_gpio_lvl = inl(vc_gpio_base + C2000_GPIO_LVL) & ~VC_GPIO_MASK;
+	outl(vc_gpio_base + C2000_GPIO_LVL, vc_gpio_lvl);
+	io = inl(vc_gpio_base + C2000_GPIO_IO_SEL);
+	io |= VC_GPIO_MASK;
+	io &= ~(1u << VC_GPIO_MDC);
+	outl(vc_gpio_base + C2000_GPIO_IO_SEL, io);
 	mtx_unlock(&vc_bb_mtx);
 
-	printf("vcigb: GPIO base 0x%x, USE_SEL 0x%08x -> 0x%08x\n",
-	    vc_gpio_base, v, inl(vc_gpio_base + C2000_GPIO_USE_SEL));
+	printf("vcigb: GPIO base 0x%x, USE_SEL 0x%08x -> 0x%08x, IO_SEL 0x%08x\n",
+	    vc_gpio_base, v, inl(vc_gpio_base + C2000_GPIO_USE_SEL),
+	    inl(vc_gpio_base + C2000_GPIO_IO_SEL));
+	if ((inl(vc_gpio_base + C2000_GPIO_IO_SEL) & (1u << VC_GPIO_MDC)) != 0) {
+		printf("vcigb: MDC GPIO %d did not become an output\n",
+		    VC_GPIO_MDC);
+		return (ENXIO);
+	}
 	return (0);
 }
 

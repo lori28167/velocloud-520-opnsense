@@ -75,7 +75,7 @@ Dal PC, con la mini-USB su `/dev/ttyUSB0` e picocom chiuso:
 
 ## Stato
 
-- LAN1-8: link 1000 full su tutte; ping OK su LAN1-7 (LAN8 da ritestare con il test corretto).
+- LAN1-8: link 1000 full e ping OK su tutte.
 - GE1/GE2: link 1000baseT full, ping OK.
 - Watchdog fermato da `ichwd`.
 - Wi-Fi (QCA988x): ath10k esiste in FreeBSD ma LinuxKPI non supporta la modalità AP.
