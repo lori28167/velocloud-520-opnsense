@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# uso: send "comando" [regex-attesa] [timeout]  -> scrive sulla console del VeloCloud e stampa la risposta
+D="$(cd "$(dirname "$0")" && pwd)"
+START=$(wc -c < "$D/con.log")
+printf '%s\r' "$1" > /dev/ttyUSB0
+PAT="${2:-.}"; T="${3:-20}"
+timeout "$T" tail -c +$((START+1)) -f "$D/con.log" | grep -a -m1 -E "$PAT" >/dev/null
+tail -c +$((START+1)) "$D/con.log" | tr -d '\r' | sed 's/\x1b\[[0-9;?]*[a-zA-Z]//g'

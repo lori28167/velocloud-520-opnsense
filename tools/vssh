@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# SSH nella VM di compilazione FreeBSD 15.1 (QEMU, porta 2222 su localhost)
+D="$(cd "$(dirname "$0")" && pwd)"
+mkdir -p -m 700 /tmp/claude-1000/cm
+exec ssh -i "$D/vm_key" -p 2222 -o StrictHostKeyChecking=no -o UserKnownHostsFile="$D/.vm_known_hosts" \
+  -o ConnectTimeout=60 -o BatchMode=yes -o LogLevel=ERROR \
+  -o ControlMaster=auto -o ControlPath=/tmp/claude-1000/cm/vc-%C -o ControlPersist=30m root@127.0.0.1 "$@"

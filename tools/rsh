@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# uso: rsh 'script sh' [timeout] -> esegue lo script con /bin/sh sul VeloCloud (la shell di root è tcsh)
+D="$(cd "$(dirname "$0")" && pwd)"; T="${2:-30}"
+B64=$(printf '%s' "$1" | base64 -w0)
+"$D/send" "echo $B64 | b64decode -r | sh -c 'echo ===S; . /dev/stdin; echo ===E'" '^===E|panic|Fatal trap' "$T" \
+  | sed -n '/^===S/,/^===E/p;/panic\|Fatal trap/,$p' | sed '1d;$d'

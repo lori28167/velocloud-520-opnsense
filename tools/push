@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# uso: push [file locale] [destinazione sul VeloCloud]
+# default: modulo appena compilato nella VM -> /tmp/if_vcigb.ko.new. Trasferisce via seriale e verifica lo SHA-256.
+D="$(cd "$(dirname "$0")" && pwd)"
+DST="${2:-/tmp/if_vcigb.ko.new}"
+if [ -n "$1" ]; then gzip -9c "$1" | base64 -w64 > "$D/.push.b64"; WANT=$(sha256sum "$1" | cut -d' ' -f1)
+else "$D/vssh" 'gzip -9c /root/vcigb/if_vcigb.ko | openssl base64 -e' > "$D/.push.b64"; WANT=$("$D/vssh" 'sha256 -q /root/vcigb/if_vcigb.ko'); fi
+"$D/send" "rm -f /tmp/push.b64 $DST; stty -echo; echo RE''ADY; cat > /tmp/push.b64" '^READY' 10 >/dev/null
+cat "$D/.push.b64" > /dev/ttyUSB0
+printf '\004' > /dev/ttyUSB0
+GOT=$("$D/send" "stty echo; echo ===S; openssl base64 -d -in /tmp/push.b64 | gunzip > $DST; sha256 -q $DST; echo ===E" '^===E' 30 | sed -n '/^===S/,/^===E/p' | sed -n 2p)
+rm -f "$D/.push.b64"
+echo "atteso   $WANT"; echo "ricevuto $GOT"
+[ "$WANT" = "$GOT" ]
