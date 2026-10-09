@@ -73,6 +73,48 @@ hw.vcigb.switch_autoinit="1"
 At boot you should see `VeloCloud edge5x0: switch port`, `88E6176 0x1761 up` (twice)
 and `WAN PHYs answering after ... ms` in `dmesg`.
 
+## Install image
+
+`OPNsense-26.7-serial-amd64-velocloud520.img` is the official OPNsense 26.7 serial
+image (signature checked with `OPNsense-26.7.pub`) with only these changes:
+
+- `/boot/modules/if_vcigb.ko`, built for the image's kernel;
+- `/boot/loader.conf.local` = [`image-payload/loader.conf.local`](image-payload/loader.conf.local)
+  (COM2 console, `ichwd`, `if_vcigb`, switches up at boot);
+- factory config: **LAN = `vcigb1` (jacks LAN1-4, 192.168.1.1/24 + DHCP)**,
+  **WAN = `vcigb2` (jack GE1, DHCP)**. LAN5-8, GE2 and the SFPs start unassigned.
+
+So the live system already has a stopped watchdog, the console on the mini-USB and
+all ports. Write it to a USB stick (`xz -dc ...img.xz | dd of=/dev/sdX bs=4M conv=fsync`,
+or Etcher), boot the box from it with the mini-USB console open at 115200, log in as
+`installer` / `opnsense` and install to the internal 7.3 GB disk ("Generic Ultra
+HS-COMBO"), not the stick. The installer copies `/boot`, `/conf` and `/usr/local`
+from the live system, so the installed system keeps all of the above. Remove the
+stick, reboot, open `https://192.168.1.1` from a PC on LAN1-4 and change the root
+password. Unofficial image: OPNsense is a trademark of Deciso B.V.
+
+How it is made (to reproduce or check it):
+
+```sh
+# 1. official image + signature
+fetch https://pkg.opnsense.org/releases/26.7/OPNsense-26.7-serial-amd64.img.{bz2,sig}
+fetch https://pkg.opnsense.org/releases/26.7/OPNsense-26.7.pub
+bunzip2 -k OPNsense-26.7-serial-amd64.img.bz2
+openssl base64 -d -in OPNsense-26.7-serial-amd64.img.sig -out sig.bin
+openssl dgst -sha256 -verify OPNsense-26.7.pub -signature sig.bin OPNsense-26.7-serial-amd64.img
+# 2. a small FAT disk with if_vcigb.ko, if_vcigb.ko.sha256 and image-payload/*
+# 3. boot a copy of the image in QEMU with that disk as the second drive (vtbd1),
+#    log in as root, option 8 (shell), then:
+mount -uw / && mount -t nullfs / /mnt
+mkdir /mnt/vcpayload && mount_msdosfs /dev/vtbd1 /mnt/vcpayload
+chroot /mnt /bin/sh /vcpayload/patch.sh
+umount /mnt/vcpayload && rmdir /mnt/vcpayload && umount /mnt && mount -ur /
+shutdown -p now
+```
+
+`patch.sh` refuses to run unless the image kernel is `stable/26.7-n283674-12334a596709`
+and the module checksum matches.
+
 ## Build
 
 The module must be built against the exact OPNsense kernel sources and options

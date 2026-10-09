@@ -1,0 +1,14 @@
+# VeloCloud Edge 520/540 - https://github.com/lori28167/velocloud-520-opnsense
+# Console on the mini-USB jack (CP2102N) = COM2, 115200 8N1
+console="comconsole"
+comconsole_port="0x2f8"
+comconsole_speed="115200"
+hw.uart.console="io:0x2f8,br:115200"
+# Stop the TCO watchdog armed by coreboot (otherwise it reboots after ~3 min)
+ichwd_load="YES"
+# All RJ45 ports: LAN5-8 = vcigb0, LAN1-4 = vcigb1, GE1 = vcigb2, GE2 = vcigb3
+if_vcigb_load="YES"
+hw.vcigb.switch_autoinit="1"
+# Unused SFP cages (igb0/igb1) can be disabled:
+#hint.igb.0.disabled="1"
+#hint.igb.1.disabled="1"
